@@ -1,6 +1,7 @@
 import cv2
 import warnings
 import torch
+import os
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -100,8 +101,8 @@ def handle_hard_totals(total, dealer_value):
 
 
 # Load the trained model
-model_path = '../best.pt'
-model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path)
+model_path = os.path.join(os.path.dirname(__file__), 'model.pt')
+model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path, force_reload=True)
 
 # Open the camera feed
 cap = cv2.VideoCapture(0)
