@@ -8,7 +8,7 @@ def blackjack_strategy(player_hand, dealer_upcard):
     # Calculate the player's total
     total = calculate_total(player_hand)
     is_soft = is_soft_hand(player_hand)
-    is_pair = is_pair(player_hand)
+    is_pair = is_pair_func(player_hand)
 
     # Determine the dealer's upcard value
     dealer_value = card_value(dealer_upcard)
@@ -38,16 +38,20 @@ def calculate_total(hand):
 def is_soft_hand(hand):
     return 11 in [card_value(card) for card in hand] and calculate_total(hand) <= 21
 
-def is_pair(hand):
+def is_pair_func(hand):
     return len(hand) == 2 and card_value(hand[0]) == card_value(hand[1])
 
 def card_value(card):
-    if card in ['J', 'Q', 'K']:
+    # Extract the numeric part of the card (e.g., '8S' -> '8', 'AH' -> 'A')
+    value = card[:-1]  # Remove the last character (suit)
+
+    # Convert face cards and Ace to their corresponding values
+    if value in ['J', 'Q', 'K']:
         return 10
-    elif card == 'A':
+    elif value == 'A':
         return 11
     else:
-        return int(card)
+        return int(value)  # Convert numeric cards to integers
 
 def handle_pairs(hand, dealer_value):
     pair_card = card_value(hand[0])
@@ -108,8 +112,11 @@ while True:
     if not ret:
         break
 
-    # Perform inference on the frame
-    results = model(frame)
+    # Convert the frame to grayscale for detection
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Perform inference on the grayscale frame
+    results = model(gray_frame)
 
     # Parse the results
     detections = results.pandas().xyxy[0]  # Detections in pandas DataFrame format
@@ -121,7 +128,7 @@ while True:
         label = detection['name']
         confidence = detection['confidence']
 
-        # Draw bounding box and label
+        # Draw bounding box and label on the colored frame
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.putText(frame, f"{label} {confidence:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
@@ -137,11 +144,14 @@ while True:
         action = blackjack_strategy(player_hand, dealer_upcard)
         cv2.putText(frame, f"Action: {action}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-    # Display the frame
+    # Display the colored frame with detections
     cv2.imshow("Blackjack Assistant", frame)
 
     # Exit on 'q' key press
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+    if cv2.getWindowProperty("Blackjack Assistant", cv2.WND_PROP_VISIBLE) < 1:
         break
 
 # Release the camera and close windows
